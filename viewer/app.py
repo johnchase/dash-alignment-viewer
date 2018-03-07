@@ -13,7 +13,10 @@ import plotly.graph_objs as go
 from collections import OrderedDict
 import json
 
-msa = skbio.alignment.TabularMSA.read('../data/msa10.fna', constructor=DNA)
+#modify this path for different alignment file. This will be replaced in the
+#the future with the uploasd component
+test_data_fp = '../data/msa1.fna'
+msa = skbio.alignment.TabularMSA.read(test_data_fp, constructor=DNA)
 base_dic = {'A': 1, 'C': .25, 'G': .5, 'T': .75, '-': 0}
 
 def get_tick_vals(start, stop):
@@ -121,8 +124,7 @@ def update_figure(start, layout, bases):
                                       colorscale=colorscale)
     
     fig['layout'].update(
-            xaxis=dict(ticks='',
-                       side='top',       
+            xaxis=dict(side='top',       
                        ticktext=np.arange(start, stop, 10) - (np.arange(start, stop, 10) % 10) + 10,
                        tickvals=tick_values,
                        showticklabels=True,
