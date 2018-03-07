@@ -15,7 +15,7 @@ import json
 
 #modify this path for different alignment file. This will be replaced in the
 #the future with the uploasd component
-test_data_fp = '../data/msa1.fna'
+test_data_fp = '../data/msa10.fna'
 msa = skbio.alignment.TabularMSA.read(test_data_fp, constructor=DNA)
 base_dic = {'A': 1, 'C': .25, 'G': .5, 'T': .75, '-': 0}
 
