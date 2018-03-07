@@ -13,7 +13,7 @@ import plotly.graph_objs as go
 from collections import OrderedDict
 import json
 
-msa = skbio.alignment.TabularMSA.read('/Users/jc33/Dropbox/plotly/msa10.fna', constructor=DNA)
+msa = skbio.alignment.TabularMSA.read('../data/msa10.fna', constructor=DNA)
 base_dic = {'A': 1, 'C': .25, 'G': .5, 'T': .75, '-': 0}
 
 def get_tick_vals(start, stop):
