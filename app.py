@@ -3,7 +3,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objs as go
 # import skbio
-from skbio.sequence import DNA
+# from skbio.sequence import DNA
 import pandas as pd
 from collections import OrderedDict
 import numpy as np
