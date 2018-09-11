@@ -164,4 +164,4 @@ def create_alignment(layout, reference_name):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)
