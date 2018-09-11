@@ -8,6 +8,8 @@ import pandas as pd
 from collections import OrderedDict
 import numpy as np
 
+app = dash.Dash(__name__)
+server = app.server
 
 test_data_fp = 'data/msa10.fna'
 lines = tuple(open(test_data_fp, 'r'))
@@ -79,7 +81,6 @@ def get_msa_order(reference_name, names, seqs):
     seq_dic.move_to_end(reference_name)
     return zip(*list(seq_dic.items())[::-1])
 
-app = dash.Dash()
 
 app.layout = html.Div(children=[
     html.H1(children='Alignment Viewer'),
