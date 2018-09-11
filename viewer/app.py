@@ -1,55 +1,92 @@
 import dash
-from dash.dependencies import Input, Output
 import dash_core_components as dcc
 import dash_html_components as html
+import plotly.graph_objs as go
 import skbio
 from skbio.sequence import DNA
-import numpy as np
-import base64
-import io
-import datetime
-import plotly.figure_factory as ff
-import plotly.graph_objs as go
+import pandas as pd
 from collections import OrderedDict
-import json
+import numpy as np
 
-#modify this path for different alignment file. This will be replaced in the
-#the future with the uploasd component
+
 test_data_fp = '../data/msa10.fna'
 msa = skbio.alignment.TabularMSA.read(test_data_fp, constructor=DNA)
+names = [seq.metadata['id'] for seq in msa]
+
+
+n_seqs, sequence_length = len(list(msa)), len(list(msa)[0])
+y = [[i]*sequence_length for i in range(n_seqs)]
+y = [item for sublist in y for item in sublist]
+x = list(range(sequence_length))*n_seqs
+
+letter_colors = {'A': '#e7298a', 'C': '#1b9e77', 'G': '#d95f02', 'T': '#7570b3', '-': '#444'}
 base_dic = {'A': 1, 'C': .25, 'G': .5, 'T': .75, '-': 0}
 
-def get_tick_vals(start, stop):
-    tick_vals = np.arange(start, stop, 10)
-    tick_vals = np.array([9, 19, 29]) - (tick_vals%10)
-    return tick_vals
+def alignment_layout(seqs, layout_type):
+    text_values = seqs[0].copy()
+    block_values = [[0]*len(text_values)]
 
 
-names = [seq.metadata['id'] for seq in msa]
-colorscale_blocks = [[0.00, '#F4F0E4'],
-              [0.25, '#1b9e77'],
-              [0.50, '#d95f02'],
-              [0.75, '#7570b3'],
-              [1.00, '#e7298a']]
+    if layout_type == 'Letter':
+        text_colors = pd.Series(seqs[0]).replace(letter_colors).tolist()
+        block_colors = [[0.00, '#FFF'],
+                        [1.00, '#FFF']]
+        block_values *= len(seqs)
 
-colorscale_letters = [[0.00, '#FFF'], 
-                    [0.25, '#FFF'], 
-                    [0.50, '#FFF'], 
-                    [0.75, '#FFF'],
-                    [1.00, '#FFF']]
-letter_colors = {'A': '#e7298a', 'C': '#1b9e77', 'G': '#d95f02', 'T': '#7570b3', '-': '#444'}
+    elif layout_type == 'Block':
+        text_colors = '#000'
+        text_values = [item for sublist in seqs for item in sublist]
+        block_colors = [[0.00, '#F4F0E4'],
+                        [0.1,  '#F4F0E4'],
+
+                        [0.1, '#1b9e77'],
+                        [0.26, '#1b9e77'],
+
+                        [0.26, '#d95f02'],
+                        [0.51, '#d95f02'],
+
+                        [0.51, '#7570b3'],
+                        [0.76, '#7570b3'],
+
+                        [0.76, '#e7298a'],
+                        [1.00, '#e7298a']]
+
+    for seq in seqs[1:]:
+        s = pd.Series(seq)
+
+        if layout_type == 'Letter':
+            text_colors.extend(s.replace(letter_colors).tolist())
+            s.where(s != seqs[0], '.', inplace=True)
+            text_values.extend(s.tolist())
+
+        elif layout_type == 'Block':
+            s.where(s != seqs[0], 0, inplace=True)
+            s.replace(base_dic, inplace=True)
+            block_values.append(s.tolist())
+    return text_values, text_colors, block_values, block_colors
+
+
+def get_msa_order(reference_name, msa):
+    names = [seq.metadata['id'] for seq in msa]
+    seqs = [list(str(e)) for e in msa]
+    seq_dic = OrderedDict(zip(names, seqs))
+    seq_dic.move_to_end(reference_name)
+    return zip(*list(seq_dic.items())[::-1])
 
 app = dash.Dash()
 
 app.layout = html.Div(children=[
     html.H1(children='Alignment Viewer'),
-    html.Div([ 
+
+    html.Div(children='''
+        Dash: A web application framework for Python.
+    '''),
+    html.Div([
     dcc.RadioItems(
-                id='layout-type',
-                options=[{'label': i, 'value': i} for i in ['Blocks', 'Letters']],
-                value='Blocks',
-                labelStyle={'display': 'inline-block'}
-            ),
+    id='layout-type',
+    options=[{'label': i, 'value': i} for i in ['Block', 'Letter']],
+    value='Block',
+    labelStyle={'display': 'inline-block'}),
 
     html.Div([
     html.Label('Reference Sequence'),
@@ -58,107 +95,73 @@ app.layout = html.Div(children=[
         options=[{'label': label, 'value': label} for label in names],
         value=names[0])], style={'width': '22%', 'display': 'inline-block'}),
 
-    dcc.Graph(id='alignment',
+    dcc.Graph(
+        id='alignment',
         config={
             'displayModeBar': False}
-        ),
-    dcc.Slider(
-        id='alignment-slider',
-        updatemode='drag',
-        min=0,
-        max=len(msa[0]) - 30,
-        value=0,
-        step=1
-        )
-    ], style={'width': '80%', 'display': 'inline-block'}),
-    html.Div(id='ordered-values', style={'display': 'none'})
-    ]
-)
-
-
-@app.callback(
-        dash.dependencies.Output('ordered-values', 'children'), 
-        [dash.dependencies.Input('parent-seq', 'value')])
-def seq_align_for_plot(name):
-    seq_dic = OrderedDict(zip(names, msa))
-    seq_dic.move_to_end(name, last=False)
-    base_text = [list(str(seq_dic[e])) for e in seq_dic]
-    base_values = np.zeros((len(base_text), len(base_text[0])))
-    for i in range(len(base_text[0])):
-        for j in range(len(base_text)):
-            if base_text[j][i] != base_text[0][i]:
-                base_values[j][i] = base_dic[base_text[j][i]]
-    updated_names = list(seq_dic.keys())
-    jdump = json.dumps([base_text, base_values.tolist(), updated_names])
-    return(jdump)
+    )
+])])
 
 
 @app.callback(
     dash.dependencies.Output('alignment', 'figure'),
-    [dash.dependencies.Input('alignment-slider', 'value'),
-     dash.dependencies.Input('layout-type', 'value'),
-     dash.dependencies.Input('ordered-values', 'children')])
-def update_figure(start, layout, bases):
-    stop = start + 30
-    tick_values = get_tick_vals(start, stop)
-    if layout == 'Blocks':
-        colorscale = colorscale_blocks
-        font_properties = {
-                'family': 'Courier New, monospace',
-                'size': 14,
-                'color': '#3f566d'}
-    else:
-        colorscale = colorscale_letters
-        font_properties = {
-                'family': 'Courier New Bold, monospace',
-                'size':16,
-                'color': '#000'
-                }
-    base_text, base_values, ordered_names = json.loads(bases)
-    base_subset = np.array(base_values)[:, start:stop]
-    text_subset = np.array(base_text)[:, start:stop]
-    
-    fig = ff.create_annotated_heatmap(base_subset,
-                                      y=ordered_names,
-                                      annotation_text=text_subset,
-                                      colorscale=colorscale)
-    
-    fig['layout'].update(
-            xaxis=dict(side='top',       
-                       ticktext=np.arange(start, stop, 10) - (np.arange(start, stop, 10) % 10) + 10,
-                       tickvals=tick_values,
-                       showticklabels=True,
-                       tickfont=dict(family='Bookman',
-                                     size=18,
-                                     color='#22293B',
-                                    ),
-                       ),
-            
-            yaxis=dict(autorange='reversed',
-               ticks='',
-               ticksuffix='  ',
-               ticktext=ordered_names,
-               tickvals=list(np.arange(0, len(base_text))),
-               showticklabels=True),
-            
-        width=1200,
-        height=(25*len(base_subset)),
-        margin=go.Margin(
+    [dash.dependencies.Input('layout-type', 'value'),
+     dash.dependencies.Input('parent-seq', 'value')])
+def create_alignment(layout, reference_name):
+
+    names, seqs = get_msa_order(reference_name, msa)
+    text_values, text_colors, block_values, block_colors = alignment_layout(seqs, layout)
+
+    trace = go.Heatmap(z=block_values,
+                       colorscale = block_colors,
+                       showscale=False,
+                      )
+
+    steps = [{'args': ['xaxis', {'range': [-0.5 + e, 30.5 + e]}],
+              'method': 'relayout',
+              'label': ''} for e in range(sequence_length-30)]
+
+    data=[trace]
+
+    data.append({'type': 'scattergl',
+                        'mode': 'text',
+                        'x': x,
+                        'y': y,
+                        'text': text_values,
+                        'textfont': {
+                            'size': 14,
+                            'color': text_colors,
+                            'family': 'Helvetica'
+                        }})
+
+    sliders = [dict(
+        minorticklen = 0,
+        tickwidth = 0,
+        active = 0,
+        steps = steps
+    )]
+
+    layout = dict( sliders=sliders,
+    yaxis=dict(autorange='reversed',
+                   ticks='',
+                   ticksuffix='  ',
+                   ticktext=names,
+                   tickvals=list(np.arange(0, len(block_values))),
+                   showticklabels=True),
+        margin=go.layout.Margin(
             l=200,
             r=50,
             b=0,
             t=50,
             pad=0),
+        height=(n_seqs*50),
+        xaxis = {'range': [-0.5, 30.5]}
+    )
 
-        annotations=dict(font=font_properties)
-        )
-    if layout == 'Letters':
-        for letter in fig.layout.annotations:
-            letter['font']['color'] = letter_colors[letter['text']]
-            if letter['text'] != '-' and letter['y'] != ordered_names[0]:
-                if letter['text'] == text_subset[0][letter['x']]:
-                    letter['text'] = '.'
+    fig = dict(data=data, layout=layout)
     return fig
+
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
