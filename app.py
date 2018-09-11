@@ -83,7 +83,7 @@ def get_msa_order(reference_name, names, seqs):
 
 
 app.layout = html.Div(children=[
-    html.H1(children='Alignment Viewer'),
+    html.H1(children='Dash Alignment Viewer'),
 
     html.Div([
     html.Label('Layout Type', style={'fontSize': 20}),
