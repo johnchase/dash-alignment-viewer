@@ -86,15 +86,16 @@ app.layout = html.Div(children=[
     html.H1(children='Alignment Viewer'),
 
     html.Div([
+    html.Label('Layout Type', style={'fontSize': 20})
     dcc.RadioItems(
     id='layout-type',
     options=[{'label': i, 'value': i} for i in ['Block', 'Letter']],
     value='Block',
     labelStyle={'display': 'inline-block'},
-    style={'marginBottom': 50}),
+    style={'marginBottom': 25}),
 
     html.Div([
-    html.Label('Reference Sequence'),
+    html.Label('Reference Sequence', style={'fontSize': 20}),
     dcc.Dropdown(
         id='parent-seq',
         options=[{'label': label, 'value': label} for label in names],
