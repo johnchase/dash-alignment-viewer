@@ -9,7 +9,7 @@ from collections import OrderedDict
 import numpy as np
 
 
-test_data_fp = '../data/msa10.fna'
+test_data_fp = 'data/msa10.fna'
 msa = skbio.alignment.TabularMSA.read(test_data_fp, constructor=DNA)
 names = [seq.metadata['id'] for seq in msa]
 
