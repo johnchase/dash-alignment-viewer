@@ -85,15 +85,13 @@ def get_msa_order(reference_name, names, seqs):
 app.layout = html.Div(children=[
     html.H1(children='Alignment Viewer'),
 
-    html.Div(children='''
-        Dash: A web application framework for Python.
-    '''),
     html.Div([
     dcc.RadioItems(
     id='layout-type',
     options=[{'label': i, 'value': i} for i in ['Block', 'Letter']],
     value='Block',
-    labelStyle={'display': 'inline-block'}),
+    labelStyle={'display': 'inline-block'},
+    style={'marginBottom': 50}),
 
     html.Div([
     html.Label('Reference Sequence'),
