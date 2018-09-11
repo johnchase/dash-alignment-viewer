@@ -86,7 +86,7 @@ app.layout = html.Div(children=[
     html.H1(children='Alignment Viewer'),
 
     html.Div([
-    html.Label('Layout Type', style={'fontSize': 20})
+    html.Label('Layout Type', style={'fontSize': 20}),
     dcc.RadioItems(
     id='layout-type',
     options=[{'label': i, 'value': i} for i in ['Block', 'Letter']],
