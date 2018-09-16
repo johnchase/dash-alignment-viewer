@@ -1,12 +1,19 @@
 import dash
+
+import numpy as np
+import pandas as pd
+
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objs as go
+
+from collections import OrderedDict
+
+from util import alignment_layout
+
 # import skbio
 # from skbio.sequence import DNA
-import pandas as pd
-from collections import OrderedDict
-import numpy as np
+
 
 app = dash.Dash(__name__)
 server = app.server
@@ -32,48 +39,7 @@ x = list(range(sequence_length))*n_seqs
 letter_colors = {'A': '#e7298a', 'C': '#1b9e77', 'G': '#d95f02', 'T': '#7570b3', '-': '#444'}
 base_dic = {'A': 1, 'C': .25, 'G': .5, 'T': .75, '-': 0}
 
-def alignment_layout(seqs, layout_type):
-    text_values = list(seqs[0])
-    block_values = [[0]*len(text_values)]
 
-
-    if layout_type == 'Letter':
-        text_colors = pd.Series(text_values).replace(letter_colors).tolist()
-        block_colors = [[0.00, '#FFF'],
-                        [1.00, '#FFF']]
-        block_values *= len(seqs)
-
-    elif layout_type == 'Block':
-        text_colors = '#000'
-        text_values = list(''.join(seqs))
-        block_colors = [[0.00, '#F4F0E4'],
-                        [0.1,  '#F4F0E4'],
-
-                        [0.1, '#1b9e77'],
-                        [0.26, '#1b9e77'],
-
-                        [0.26, '#d95f02'],
-                        [0.51, '#d95f02'],
-
-                        [0.51, '#7570b3'],
-                        [0.76, '#7570b3'],
-
-                        [0.76, '#e7298a'],
-                        [1.00, '#e7298a']]
-
-    for seq in seqs[1:]:
-        s = pd.Series(list(seq))
-
-        if layout_type == 'Letter':
-            text_colors.extend(s.replace(letter_colors).tolist())
-            s.where(s != pd.Series(list(seqs[0])), '.', inplace=True)
-            text_values.extend(s.tolist())
-
-        elif layout_type == 'Block':
-            s.where(s != pd.Series(list(seqs[0])), 0, inplace=True)
-            s.replace(base_dic, inplace=True)
-            block_values.append(s.tolist())
-    return text_values, text_colors, block_values, block_colors
 
 
 def get_msa_order(reference_name, names, seqs):
@@ -116,12 +82,14 @@ app.layout = html.Div(children=[
 def create_alignment(layout, reference_name):
 
     ordered_names, ordered_seqs = get_msa_order(reference_name, names, seqs)
-    text_values, text_colors, block_values, block_colors = alignment_layout(ordered_seqs, layout)
+    text_values, text_colors, block_values, block_colors = \
+    alignment_layout(ordered_seqs, layout, letter_colors, base_dic)
 
     trace = go.Heatmap(z=block_values,
                        colorscale = block_colors,
                        showscale=False,
                       )
+
 
     steps = [{'args': ['xaxis', {'range': [-0.5 + e, 30.5 + e]}],
               'method': 'relayout',
