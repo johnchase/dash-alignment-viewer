@@ -10,8 +10,8 @@ import dash_html_components as html
 import plotly.graph_objs as go
 
 from util import (alignment_layout, get_msa_order, get_dimensions,
-                  parse_sequences)
-from style import LETTER_COLORS, BASE_DIC
+                  parse_seq_object)
+from style import LETTER_COLORS, BASE_DIC, UPLOAD_BUTTON
 # import skbio
 # from skbio.sequence import DNA
 
@@ -32,8 +32,9 @@ app.layout = html.Div(children=[
     html.H1(children='Dash Alignment Viewer'),
     html.Div([
 
-        html.Div(dcc.Upload('Upload File',
-                            id='upload_data')),
+        dcc.Upload(html.Button('Upload File',
+                               style=UPLOAD_BUTTON),
+                   id='upload_data'),
 
         html.Label('Layout Type', style={'fontSize': 20}),
 
@@ -44,13 +45,15 @@ app.layout = html.Div(children=[
                        labelStyle={'display': 'inline-block'},
                        style={'marginBottom': 25}),
 
-        # html.Div([
-        #     html.Label('Reference Sequence', style={'fontSize': 20}),
-        #     dcc.Dropdown(id='parent-seq',
-        #                  options=[{'label': label, 'value': label}
-        #                           for label in names],
-        #                  value=names[0])], style={'width': '22%',
-        #                                           'display': 'inline-block'}),
+        html.Div([
+            html.Label('Reference Sequence', style={'fontSize': 20}),
+            # dcc.Dropdown(id='parent-seq',
+            #              options=[{'label': label, 'value': label}
+            #                       for label in names],
+            #              value=names[0])], style={'width': '22%',
+            #                                       'display': 'inline-block'}),
+            dcc.Dropdown(id='parent-seq')],
+                         style={'width': '22%', 'display': 'inline-block'}),
 
         dcc.Graph(
             id='alignment',
@@ -59,22 +62,30 @@ app.layout = html.Div(children=[
 
 
 @app.callback(
+    dash.dependencies.Output('parent-seq', 'options'),
+    [dash.dependencies.Input('upload_data', 'contents')])
+def get_sequence_names(seq_object):
+    names, _ = parse_seq_object(seq_object)
+    return [{'label': label, 'value': label} for label in names]
+
+
+@app.callback(
     dash.dependencies.Output('alignment', 'figure'),
     [dash.dependencies.Input('layout-type', 'value'),
-     # dash.dependencies.Input('parent-seq', 'value'),
+     dash.dependencies.Input('parent-seq', 'value'),
      dash.dependencies.Input('upload_data', 'contents')])
-# def create_alignment(layout, reference_name, seq_object):
-def create_alignment(layout, seq_object):
+def create_alignment(layout, reference_name, seq_object):
     '''Create alignment'''
-    content_type, content_string = seq_object.split(',')
-    decoded = base64.b64decode(content_string)
-    seq_lines = decoded.decode('utf-8').strip().split('\n')
-    names, seqs = parse_sequences(seq_lines)
+    names, seqs = parse_seq_object(seq_object)
 
     x, y, n_seqs, sequence_length = get_dimensions(seqs)
-    # ordered_names, ordered_seqs = get_msa_order(reference_name, names, seqs)
+
+    if reference_name is None:
+        reference_name = names[0]
+    ordered_names, ordered_seqs = get_msa_order(reference_name, names, seqs)
+
     text_values, text_colors, block_values, block_colors = \
-    alignment_layout(seqs, layout, LETTER_COLORS, BASE_DIC)
+    alignment_layout(ordered_seqs, layout, LETTER_COLORS, BASE_DIC)
 
     trace = go.Heatmap(z=block_values,
                        colorscale=block_colors,
@@ -110,10 +121,11 @@ def create_alignment(layout, seq_object):
     yaxis=dict(autorange='reversed',
                    ticks='',
                    ticksuffix='  ',
-                   ticktext=names,
+                   ticktext=ordered_names,
                    tickvals=list(np.arange(0, len(block_values))),
                    showticklabels=True),
         margin=go.layout.Margin(
+
             l=200,
             r=50,
             b=0,

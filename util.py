@@ -1,6 +1,9 @@
 """Functions for application
 """
 import collections
+import base64
+
+
 import pandas as pd
 
 
@@ -76,3 +79,11 @@ def get_dimensions(seqs):
     y = [item for sublist in y for item in sublist]
     x = list(range(sequence_length))*n_seqs
     return x, y, n_seqs, sequence_length
+
+def parse_seq_object(seq_object):
+    '''Parse the object that is read in by Dash. This would ultimately use
+    skbio hoewever that causes Heroku to fail currently'''
+    _, content_string = seq_object.split(',')
+    decoded = base64.b64decode(content_string)
+    seq_lines = decoded.decode('utf-8').strip().split('\n')
+    return parse_sequences(seq_lines)
