@@ -32,6 +32,21 @@ app.layout = html.Div(children=[
     html.H1(children='Dash Alignment Viewer'),
     html.Div([
 
+        html.Div(dcc.Upload(html.Button('Upload File',
+                                        id='upload_data',
+                                        n_clicks_timestamp=-1,
+                                        style={'width': '100',
+                                               'height': '30',
+                                               'background': 'transparent',
+                                               'border': '2px solid #0099CC',
+                                               'margin': '2px',
+                                               'border-radius': '6px',
+                                               'outline': 'none',
+                                               }
+                                               )),
+                     id='upload_button',
+                     ),
+
         html.Label('Layout Type', style={'fontSize': 20}),
 
         dcc.RadioItems(id='layout-type',
