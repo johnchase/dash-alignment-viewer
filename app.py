@@ -32,20 +32,8 @@ app.layout = html.Div(children=[
     html.H1(children='Dash Alignment Viewer'),
     html.Div([
 
-        html.Div(dcc.Upload(html.Button('Upload File',
-                                        id='upload_data',
-                                        n_clicks_timestamp=-1,
-                                        style={'width': '100',
-                                               'height': '30',
-                                               'background': 'transparent',
-                                               'border': '2px solid #0099CC',
-                                               'margin': '2px',
-                                               'border-radius': '6px',
-                                               'outline': 'none',
-                                               }
-                                               )),
-                     id='upload_button',
-                     ),
+        html.Div(dcc.Upload('Upload File',
+                            id='upload_data')),
 
         html.Label('Layout Type', style={'fontSize': 20}),
 
@@ -73,8 +61,20 @@ app.layout = html.Div(children=[
 @app.callback(
     dash.dependencies.Output('alignment', 'figure'),
     [dash.dependencies.Input('layout-type', 'value'),
-     dash.dependencies.Input('parent-seq', 'value')])
-def create_alignment(layout, reference_name):
+     dash.dependencies.Input('parent-seq', 'value'),
+     dash.dependencies.Input('upload_data', 'contents')])
+# def create_alignment(layout, reference_name, b1_timestamp, b2_timestamp, seq_object):
+#     if b1_timestamp + b2_timestamp == -2:
+#         return dict(data=[go.Heatmap()])
+#     if b1_timestamp > b2_timestamp:
+#         decoded = base64.b64decode(seq_object[0].split(',')[1])
+#         seqs = seq_object.decode('utf-8').split('\n')
+#
+#     else:
+#         seqs = tuple(open(test_data_fp, 'r'))
+
+
+def create_alignment(layout, reference_name, seq_object):
     '''Create alignment'''
     x, y, n_seqs, sequence_length = get_dimensions(seqs)
     ordered_names, ordered_seqs = get_msa_order(reference_name, names, seqs)
