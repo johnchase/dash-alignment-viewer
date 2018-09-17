@@ -1,6 +1,23 @@
+"""Functions for application
+"""
+import collections
 import pandas as pd
 
+
+def parse_sequences(seq_lines):
+    """Parse sequences that are present as lines i.e. from reading a file"""
+    names = []
+    seqs = []
+    for seq_line in seq_lines:
+        if seq_line.startswith('>'):
+            names.append(seq_line.split(' ')[0].replace('>', ''))
+        else:
+            seqs.append(seq_line.strip())
+    return names, seqs
+
+
 def alignment_layout(seqs, layout_type, letter_colors, base_dic):
+    '''Get layout for alignment'''
     text_values = list(seqs[0])
     block_values = [[0]*len(text_values)]
 
@@ -30,15 +47,32 @@ def alignment_layout(seqs, layout_type, letter_colors, base_dic):
                         [1.00, '#e7298a']]
 
     for seq in seqs[1:]:
-        s = pd.Series(list(seq))
+        seq_series = pd.Series(list(seq))
 
         if layout_type == 'Letter':
-            text_colors.extend(s.replace(letter_colors).tolist())
-            s.where(s != pd.Series(list(seqs[0])), '.', inplace=True)
-            text_values.extend(s.tolist())
+            text_colors.extend(seq_series.replace(letter_colors).tolist())
+            seq_series.where(seq_series != pd.Series(list(seqs[0])), '.',
+                             inplace=True)
+            text_values.extend(seq_series.tolist())
 
         elif layout_type == 'Block':
-            s.where(s != pd.Series(list(seqs[0])), 0, inplace=True)
-            s.replace(base_dic, inplace=True)
-            block_values.append(s.tolist())
+            seq_series.where(seq_series != pd.Series(list(seqs[0])), 0,
+                             inplace=True)
+            seq_series.replace(base_dic, inplace=True)
+            block_values.append(seq_series.tolist())
     return text_values, text_colors, block_values, block_colors
+
+
+def get_msa_order(reference_name, names, seqs):
+    """Order sequences"""
+    seq_dic = collections.OrderedDict(zip(names, seqs))
+    seq_dic.move_to_end(reference_name)
+    return zip(*list(seq_dic.items())[::-1])
+
+def get_dimensions(seqs):
+    '''Function for getting figure get_dimensions'''
+    n_seqs, sequence_length = len(seqs), len(seqs[0])
+    y = [[i]*sequence_length for i in range(n_seqs)]
+    y = [item for sublist in y for item in sublist]
+    x = list(range(sequence_length))*n_seqs
+    return x, y, n_seqs, sequence_length

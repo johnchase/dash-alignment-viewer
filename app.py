@@ -1,16 +1,17 @@
+"""ALignmet viewer application
+"""
+
 import dash
 
 import numpy as np
-import pandas as pd
 
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objs as go
 
-from collections import OrderedDict
-
-from util import alignment_layout
-
+from util import (alignment_layout, get_msa_order, get_dimensions,
+                  parse_sequences)
+from style import LETTER_COLORS, BASE_DIC
 # import skbio
 # from skbio.sequence import DNA
 
@@ -19,60 +20,39 @@ app = dash.Dash(__name__)
 server = app.server
 
 test_data_fp = 'data/msa10.fna'
-lines = tuple(open(test_data_fp, 'r'))
-names = []
-seqs = []
-for line in lines:
-    if line.startswith('>'):
-        names.append(line.split(' ')[0].replace('>', ''))
-    else:
-        seqs.append(line.strip())
+seq_lines = tuple(open(test_data_fp, 'r'))
+names, seqs = parse_sequences(seq_lines)
+
 # msa = skbio.alignment.TabularMSA.read(test_data_fp, constructor=DNA)
 # names = [seq.metadata['id'] for seq in msa]
 
 
-n_seqs, sequence_length = len(seqs), len(seqs[0])
-y = [[i]*sequence_length for i in range(n_seqs)]
-y = [item for sublist in y for item in sublist]
-x = list(range(sequence_length))*n_seqs
-
-letter_colors = {'A': '#e7298a', 'C': '#1b9e77', 'G': '#d95f02', 'T': '#7570b3', '-': '#444'}
-base_dic = {'A': 1, 'C': .25, 'G': .5, 'T': .75, '-': 0}
-
-
-
-
-def get_msa_order(reference_name, names, seqs):
-    seq_dic = OrderedDict(zip(names, seqs))
-    seq_dic.move_to_end(reference_name)
-    return zip(*list(seq_dic.items())[::-1])
-
 
 app.layout = html.Div(children=[
     html.H1(children='Dash Alignment Viewer'),
-
     html.Div([
-    html.Label('Layout Type', style={'fontSize': 20}),
-    dcc.RadioItems(
-    id='layout-type',
-    options=[{'label': i, 'value': i} for i in ['Block', 'Letter']],
-    value='Block',
-    labelStyle={'display': 'inline-block'},
-    style={'marginBottom': 25}),
 
-    html.Div([
-    html.Label('Reference Sequence', style={'fontSize': 20}),
-    dcc.Dropdown(
-        id='parent-seq',
-        options=[{'label': label, 'value': label} for label in names],
-        value=names[0])], style={'width': '22%', 'display': 'inline-block'}),
+        html.Label('Layout Type', style={'fontSize': 20}),
 
-    dcc.Graph(
-        id='alignment',
-        config={
-            'displayModeBar': False}
-    )
-])])
+        dcc.RadioItems(id='layout-type',
+                       options=[{'label': i, 'value': i} for i in ['Block',
+                                                                   'Letter']],
+                       value='Block',
+                       labelStyle={'display': 'inline-block'},
+                       style={'marginBottom': 25}),
+
+        html.Div([
+            html.Label('Reference Sequence', style={'fontSize': 20}),
+            dcc.Dropdown(id='parent-seq',
+                         options=[{'label': label, 'value': label}
+                                  for label in names],
+                         value=names[0])], style={'width': '22%',
+                                                  'display': 'inline-block'}),
+
+        dcc.Graph(
+            id='alignment',
+            config={
+                'displayModeBar': False})])])
 
 
 @app.callback(
@@ -80,13 +60,14 @@ app.layout = html.Div(children=[
     [dash.dependencies.Input('layout-type', 'value'),
      dash.dependencies.Input('parent-seq', 'value')])
 def create_alignment(layout, reference_name):
-
+    '''Create alignment'''
+    x, y, n_seqs, sequence_length = get_dimensions(seqs)
     ordered_names, ordered_seqs = get_msa_order(reference_name, names, seqs)
     text_values, text_colors, block_values, block_colors = \
-    alignment_layout(ordered_seqs, layout, letter_colors, base_dic)
+    alignment_layout(ordered_seqs, layout, LETTER_COLORS, BASE_DIC)
 
     trace = go.Heatmap(z=block_values,
-                       colorscale = block_colors,
+                       colorscale=block_colors,
                        showscale=False,
                       )
 
@@ -95,10 +76,10 @@ def create_alignment(layout, reference_name):
               'method': 'relayout',
               'label': ''} for e in range(sequence_length-30)]
 
-    data=[trace]
+    data = [trace]
 
     data.append({'type': 'scattergl',
-                        'mode': 'text',
+                 'mode': 'text',
                         'x': x,
                         'y': y,
                         'text': text_values,
@@ -109,13 +90,13 @@ def create_alignment(layout, reference_name):
                         }})
 
     sliders = [dict(
-        minorticklen = 0,
-        tickwidth = 0,
-        active = 0,
-        steps = steps
+        minorticklen=0,
+        tickwidth=0,
+        active=0,
+        steps=steps
     )]
 
-    layout = dict( sliders=sliders,
+    layout = dict(sliders=sliders,
     yaxis=dict(autorange='reversed',
                    ticks='',
                    ticksuffix='  ',
@@ -129,7 +110,7 @@ def create_alignment(layout, reference_name):
             t=50,
             pad=0),
         height=(n_seqs*50),
-        xaxis = {'range': [-0.5, 30.5]}
+        xaxis={'range': [-0.5, 30.5]}
     )
 
     fig = dict(data=data, layout=layout)
