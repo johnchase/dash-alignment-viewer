@@ -1,6 +1,5 @@
 """ALignmet viewer application
 """
-import base64
 import dash
 
 import numpy as np
@@ -32,9 +31,14 @@ app.layout = html.Div(children=[
     html.H1(children='Dash Alignment Viewer'),
     html.Div([
 
-        dcc.Upload(html.Button('Upload File',
-                               style=UPLOAD_BUTTON),
-                   id='upload_data'),
+        html.Div([dcc.Upload(html.Button('Upload File',
+                                         style=UPLOAD_BUTTON),
+                             id='upload_data'),
+
+                             html.Button('Sample Data', style=UPLOAD_BUTTON),
+                ],
+                style={'display': 'inline-block'}),
+
 
         html.Label('Layout Type', style={'fontSize': 20}),
 
