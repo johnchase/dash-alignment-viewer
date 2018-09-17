@@ -1,6 +1,6 @@
 """ALignmet viewer application
 """
-
+import base64
 import dash
 
 import numpy as np
@@ -17,8 +17,8 @@ from style import LETTER_COLORS, BASE_DIC
 
 
 app = dash.Dash(__name__)
-# server = app.server
-#
+server = app.server
+
 # test_data_fp = 'data/msa10.fna'
 # seq_lines = tuple(open(test_data_fp, 'r'))
 # names, seqs = parse_sequences(seq_lines)
@@ -44,13 +44,13 @@ app.layout = html.Div(children=[
                        labelStyle={'display': 'inline-block'},
                        style={'marginBottom': 25}),
 
-        html.Div([
-            html.Label('Reference Sequence', style={'fontSize': 20}),
-            dcc.Dropdown(id='parent-seq',
-                         options=[{'label': label, 'value': label}
-                                  for label in names],
-                         value=names[0])], style={'width': '22%',
-                                                  'display': 'inline-block'}),
+        # html.Div([
+        #     html.Label('Reference Sequence', style={'fontSize': 20}),
+        #     dcc.Dropdown(id='parent-seq',
+        #                  options=[{'label': label, 'value': label}
+        #                           for label in names],
+        #                  value=names[0])], style={'width': '22%',
+        #                                           'display': 'inline-block'}),
 
         dcc.Graph(
             id='alignment',
@@ -61,31 +61,20 @@ app.layout = html.Div(children=[
 @app.callback(
     dash.dependencies.Output('alignment', 'figure'),
     [dash.dependencies.Input('layout-type', 'value'),
-     dash.dependencies.Input('parent-seq', 'value'),
+     # dash.dependencies.Input('parent-seq', 'value'),
      dash.dependencies.Input('upload_data', 'contents')])
-# def create_alignment(layout, reference_name, b1_timestamp, b2_timestamp, seq_object):
-#     if b1_timestamp + b2_timestamp == -2:
-#         return dict(data=[go.Heatmap()])
-#     if b1_timestamp > b2_timestamp:
-#         decoded = base64.b64decode(seq_object[0].split(',')[1])
-#         seqs = seq_object.decode('utf-8').split('\n')
-#
-#     else:
-#         seqs = tuple(open(test_data_fp, 'r'))
-
-
-def create_alignment(layout, reference_name, seq_object):
+# def create_alignment(layout, reference_name, seq_object):
+def create_alignment(layout, seq_object):
     '''Create alignment'''
-
-    decoded = base64.b64decode(seq_object[0].split(',')[1])
-    seq_lines = seq_object.decode('utf-8').split('\n')
+    content_type, content_string = seq_object.split(',')
+    decoded = base64.b64decode(content_string)
+    seq_lines = decoded.decode('utf-8').strip().split('\n')
     names, seqs = parse_sequences(seq_lines)
 
-
     x, y, n_seqs, sequence_length = get_dimensions(seqs)
-    ordered_names, ordered_seqs = get_msa_order(reference_name, names, seqs)
+    # ordered_names, ordered_seqs = get_msa_order(reference_name, names, seqs)
     text_values, text_colors, block_values, block_colors = \
-    alignment_layout(ordered_seqs, layout, LETTER_COLORS, BASE_DIC)
+    alignment_layout(seqs, layout, LETTER_COLORS, BASE_DIC)
 
     trace = go.Heatmap(z=block_values,
                        colorscale=block_colors,
@@ -121,7 +110,7 @@ def create_alignment(layout, reference_name, seq_object):
     yaxis=dict(autorange='reversed',
                    ticks='',
                    ticksuffix='  ',
-                   ticktext=ordered_names,
+                   ticktext=names,
                    tickvals=list(np.arange(0, len(block_values))),
                    showticklabels=True),
         margin=go.layout.Margin(
