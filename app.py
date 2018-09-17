@@ -35,7 +35,7 @@ app.layout = html.Div(children=[
                              id='upload_data',
                              style={'display': 'inline-block'}),
 
-                             html.Button('Sample Data', style=UPLOAD_BUTTON),
+                             html.Button('Sample Data (Broken)', style=UPLOAD_BUTTON),
                 ]),
 
 
