@@ -31,13 +31,12 @@ app.layout = html.Div(children=[
     html.H1(children='Dash Alignment Viewer'),
     html.Div([
 
-        html.Div([dcc.Upload(html.Button('Upload File',
-                                         style=UPLOAD_BUTTON),
-                             id='upload_data'),
+        html.Div([dcc.Upload(html.Button('Upload File', style=UPLOAD_BUTTON),
+                             id='upload_data',
+                             style={'display': 'inline-block'}),
 
                              html.Button('Sample Data', style=UPLOAD_BUTTON),
-                ],
-                style={'display': 'inline-block'}),
+                ]),
 
 
         html.Label('Layout Type', style={'fontSize': 20}),
@@ -46,16 +45,10 @@ app.layout = html.Div(children=[
                        options=[{'label': i, 'value': i} for i in ['Block',
                                                                    'Letter']],
                        value='Block',
-                       labelStyle={'display': 'inline-block'},
                        style={'marginBottom': 25}),
 
         html.Div([
             html.Label('Reference Sequence', style={'fontSize': 20}),
-            # dcc.Dropdown(id='parent-seq',
-            #              options=[{'label': label, 'value': label}
-            #                       for label in names],
-            #              value=names[0])], style={'width': '22%',
-            #                                       'display': 'inline-block'}),
             dcc.Dropdown(id='parent-seq')],
                          style={'width': '22%', 'display': 'inline-block'}),
 

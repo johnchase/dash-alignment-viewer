@@ -15,5 +15,6 @@ UPLOAD_BUTTON = {'width': '100',
                  'border-radius': '6px',
                  'outline': 'none',
                  'text-align': 'center',
-                 'vertical-align': 'middle'
+                 'vertical-align': 'middle',
+                 'display': 'inline-block'
                }
