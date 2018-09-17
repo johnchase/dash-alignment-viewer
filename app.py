@@ -17,11 +17,11 @@ from style import LETTER_COLORS, BASE_DIC
 
 
 app = dash.Dash(__name__)
-server = app.server
-
-test_data_fp = 'data/msa10.fna'
-seq_lines = tuple(open(test_data_fp, 'r'))
-names, seqs = parse_sequences(seq_lines)
+# server = app.server
+#
+# test_data_fp = 'data/msa10.fna'
+# seq_lines = tuple(open(test_data_fp, 'r'))
+# names, seqs = parse_sequences(seq_lines)
 
 # msa = skbio.alignment.TabularMSA.read(test_data_fp, constructor=DNA)
 # names = [seq.metadata['id'] for seq in msa]
@@ -76,6 +76,12 @@ app.layout = html.Div(children=[
 
 def create_alignment(layout, reference_name, seq_object):
     '''Create alignment'''
+
+    decoded = base64.b64decode(seq_object[0].split(',')[1])
+    seq_lines = seq_object.decode('utf-8').split('\n')
+    names, seqs = parse_sequences(seq_lines)
+
+
     x, y, n_seqs, sequence_length = get_dimensions(seqs)
     ordered_names, ordered_seqs = get_msa_order(reference_name, names, seqs)
     text_values, text_colors, block_values, block_colors = \
