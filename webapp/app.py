@@ -9,6 +9,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objs as go
 
+from plotly import tools
 from util import (alignment_layout, get_msa_order, get_dimensions,
                   parse_seq_object, parse_sequences)
 from style import BASE_DIC, UPLOAD_BUTTON, COLOR_DIC
@@ -86,11 +87,11 @@ def get_sequence_names(upload_object, upload_timestamp,
         if sample_object is None:
             return ''
         seq_lines = sample_object
-    names, _ = parse_sequences(seq_lines)
+    names, _, _ = parse_sequences(seq_lines)
     return [{'label': label, 'value': label} for label in names]
 
 
-    iint(seq_object)
+#    iint(seq_object)
 @app.callback(
     dash.dependencies.Output('alignment', 'figure'),
     [dash.dependencies.Input('layout-type', 'value'),
@@ -101,9 +102,9 @@ def get_sequence_names(upload_object, upload_timestamp,
      dash.dependencies.Input('sample-data-div', 'n_clicks_timestamp'),
      dash.dependencies.Input('color-palette', 'value')])
 def create_alignment(layout, reference_name,
-                    upload_object, upload_timestamp,
-                    sample_object, sample_timestamp,
-                    palette_name):
+                     upload_object, upload_timestamp,
+                     sample_object, sample_timestamp,
+                     palette_name):
     '''Create alignment'''
     if int(upload_timestamp) > int(sample_timestamp):
         seq_object = upload_object
@@ -115,8 +116,8 @@ def create_alignment(layout, reference_name,
             return ''
         seq_lines = sample_object
 
-    names, seqs = parse_sequences(seq_lines)
-
+    names, seqs, conservation  = parse_sequences(seq_lines)
+ 
     x, y, n_seqs, sequence_length = get_dimensions(seqs)
 
     try:
@@ -129,55 +130,80 @@ def create_alignment(layout, reference_name,
     palette = COLOR_DIC[palette_name]
     text_values, text_colors, block_values, block_colors = \
     alignment_layout(ordered_seqs, layout, palette, BASE_DIC)
-
+    
     trace = go.Heatmap(z=block_values,
-                       colorscale=block_colors,
+                       colorscale = block_colors,
                        showscale=False,
                       )
-
 
     steps = [{'args': ['xaxis', {'range': [-0.5 + e, 30.5 + e]}],
               'method': 'relayout',
               'label': ''} for e in range(sequence_length-30)]
 
-    data = [trace]
+    webgl_text = {'type': 'scattergl',
+                        'mode': 'text',
+                        'x': x,
+                        'y': y,
+                        'text': text_values,
+                        'yaxis': 'y2',
+                        'textfont': {
+                            'size': 18,
+                            'color': text_colors
+                        }}
 
-    data.append({'type': 'scattergl',
-                 'mode': 'text',
-                 'x': x,
-                 'y': y,
-                 'text': text_values,
-                 'textfont': {
-                     'size': 14,
-                     'color': text_colors,
-                     'family': 'Helvetica'
-                     }})
+    
+    
+    bar_trace = {'type': 'bar', 
+                        'x': list(range(sequence_length)),
+                        'y': conservation,
+                        'marker': {'color': '#1e90ff'}}
+
+
+    fig = tools.make_subplots(rows=2, cols=1,
+                              shared_xaxes=True,
+                              vertical_spacing=0.001)
+    fig.append_trace(trace, 2, 1)
+    fig.append_trace(bar_trace, 1, 1)
+
+    fig = fig.to_plotly_json()
+
+    fig['data'].append(webgl_text)
 
     sliders = [dict(
-        minorticklen=0,
-        tickwidth=0,
-        active=0,
-        steps=steps
+        minorticklen = 0,
+        tickwidth = 0,
+        active = 0,
+        steps = steps
     )]
-
-    layout = dict(sliders=sliders,
-                  yaxis=dict(autorange='reversed',
-                             ticks='',
-                             ticksuffix='  ',
-                             ticktext=ordered_names,
-                             tickvals=list(np.arange(0, len(block_values))),
-                             showticklabels=True),
-                  margin=go.layout.Margin(
-                      l=200,
-                      r=50,
-                      b=0,
-                      t=50,
-                      pad=0),
-
-                  height=(n_seqs*50 + 100),
-                  xaxis={'range': [-0.5, 30.5]}
-                  )
-    fig = dict(data=data, layout=layout)
+    fig['layout'] = dict(
+              sliders=sliders,
+        yaxis2=dict(autorange='reversed',
+                   ticks='',
+                   ticksuffix='  ',
+                   ticktext=names,
+                   tickvals=list(np.arange(0, len(block_values))),
+                   showticklabels=True),
+        yaxis=dict(ticks='',
+                   ticksuffix='  ',
+                   showticklabels=False,
+                   domain=[0.7, 1]),
+        margin=go.layout.Margin(
+            l=200,
+            r=50,
+            b=0,
+            t=50,
+            pad=0),
+        height=((n_seqs*50) + 100),
+        xaxis = {'range': [-0.5, 30.5]},
+        showlegend=False
+    )
+    
+    height = (fig['layout']['height'] - fig['layout']['margin']['t'] -
+    fig['layout']['margin']['b'])
+    print(height)
+    y1_height = 65 #px
+    fig['layout']['yaxis']['domain'] = [1 - y1_height/height, 1]
+    fig['layout']['yaxis2']['domain'] = [0, 1.01 - (y1_height/height)]
     return fig
 
 

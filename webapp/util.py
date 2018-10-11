@@ -13,7 +13,8 @@ def parse_sequences(seq_lines):
     msa = skbio.alignment.TabularMSA.read(seq_lines,
                                           constructor=skbio.sequence.DNA)
     seqs, names = zip(*[(str(seq), seq.metadata['id']) for seq in msa])
-    return names, seqs
+    conservation = msa.conservation()
+    return names, seqs, conservation
 
 
 def alignment_layout(seqs, layout_type, letter_colors, base_dic):
