@@ -91,7 +91,6 @@ def get_sequence_names(upload_object, upload_timestamp,
     return [{'label': label, 'value': label} for label in names]
 
 
-#    iint(seq_object)
 @app.callback(
     dash.dependencies.Output('alignment', 'figure'),
     [dash.dependencies.Input('layout-type', 'value'),
@@ -180,7 +179,7 @@ def create_alignment(layout, reference_name,
         yaxis2=dict(autorange='reversed',
                    ticks='',
                    ticksuffix='  ',
-                   ticktext=names,
+                   ticktext=ordered_names,
                    tickvals=list(np.arange(0, len(block_values))),
                    showticklabels=True),
         yaxis=dict(ticks='',
@@ -200,7 +199,6 @@ def create_alignment(layout, reference_name,
     
     height = (fig['layout']['height'] - fig['layout']['margin']['t'] -
     fig['layout']['margin']['b'])
-    print(height)
     y1_height = 65 #px
     fig['layout']['yaxis']['domain'] = [1 - y1_height/height, 1]
     fig['layout']['yaxis2']['domain'] = [0, 1.01 - (y1_height/height)]
@@ -208,4 +206,4 @@ def create_alignment(layout, reference_name,
 
 
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0', debug=True)
+    app.run_server(host='0.0.0.0', debug=False)
