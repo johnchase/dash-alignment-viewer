@@ -17,7 +17,8 @@ def parse_sequences(seq_lines):
     return names, seqs, conservation
 
 
-def alignment_layout(seqs, layout_type, letter_colors, base_dic):
+def alignment_layout(seqs, layout_type,
+                     letter_colors, reference_layout,base_dic):
     '''Get layout for alignment'''
     letter_colors['-'] = '#444'
     text_values = list(seqs[0])
@@ -53,15 +54,20 @@ def alignment_layout(seqs, layout_type, letter_colors, base_dic):
 
         if layout_type == 'Letter':
             text_colors.extend(seq_series.replace(letter_colors).tolist())
-            seq_series.where(seq_series != pd.Series(list(seqs[0])), '.',
-                             inplace=True)
+            if reference_layout:
+                seq_series.where(seq_series != pd.Series(list(seqs[0])), '.',
+                                 inplace=True)
+            
             text_values.extend(seq_series.tolist())
 
         elif layout_type == 'Block':
-            seq_series.where(seq_series != pd.Series(list(seqs[0])), 0,
-                             inplace=True)
+            if reference_layout:
+                seq_series.where(seq_series != pd.Series(list(seqs[0])), 0,
+                                 inplace=True)
             seq_series.replace(base_dic, inplace=True)
             block_values.append(seq_series.tolist())
+        if not reference_layout and layout_type == 'Block':
+            block_values[0] = pd.Series(list(seqs[0])).replace(base_dic).tolist()
     return text_values, text_colors, block_values, block_colors
 
 

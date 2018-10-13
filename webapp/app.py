@@ -31,6 +31,15 @@ app.layout = html.Div(children=[
                  ]),
 
     html.Div([
+
+        dcc.Checklist(id='reference_layout',
+                      options=[{'label': 'Reference Layout',
+                                'value': True}],
+                      values=[True],
+                      style={'marginRight': 20,
+                             'display': 'inline-block'}),
+
+
         dcc.RadioItems(id='layout-type',
                        options=[{'label': i, 'value': i} for i in ['Block',
                                                                    'Letter']],
@@ -99,11 +108,12 @@ def get_sequence_names(upload_object, upload_timestamp,
      dash.dependencies.Input('upload-button', 'n_clicks_timestamp'),
      dash.dependencies.Input('sample-data', 'value'),
      dash.dependencies.Input('sample-data-div', 'n_clicks_timestamp'),
-     dash.dependencies.Input('color-palette', 'value')])
+     dash.dependencies.Input('color-palette', 'value'),
+     dash.dependencies.Input('reference_layout', 'values')])
 def create_alignment(layout, reference_name,
                      upload_object, upload_timestamp,
                      sample_object, sample_timestamp,
-                     palette_name):
+                     palette_name, reference_layout):
     '''Create alignment'''
     if int(upload_timestamp) > int(sample_timestamp):
         seq_object = upload_object
@@ -127,8 +137,17 @@ def create_alignment(layout, reference_name,
         ordered_names, ordered_seqs = names, seqs
     
     palette = COLOR_DIC[palette_name]
+    
+    # I am sort of misusing the checkbox for the alignment layout. Really this
+    # should be returning True/False rather than [True] and []
+    
+    if reference_layout: 
+        reference_layout = True
+    else: 
+        refrence_layout = False
+
     text_values, text_colors, block_values, block_colors = \
-    alignment_layout(ordered_seqs, layout, palette, BASE_DIC)
+    alignment_layout(ordered_seqs, layout, palette, reference_layout, BASE_DIC)
     
     trace = go.Heatmap(z=block_values,
                        colorscale = block_colors,
@@ -206,4 +225,4 @@ def create_alignment(layout, reference_name,
 
 
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0', debug=False)
+    app.run_server(host='0.0.0.0', debug=True)
