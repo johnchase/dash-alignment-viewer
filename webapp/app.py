@@ -27,8 +27,8 @@ app.layout = html.Div(children=[
                                          n_clicks_timestamp='0',
                                          style=UPLOAD_BUTTON),
                              id='upload_data',
-                             style={'display': 'inline-block', 'marginBottom':
-                                 40}),
+                             style={'display': 'inline-block',
+                                    'marginBottom': 40}),
                  ]),
 
     html.Div([
@@ -47,6 +47,7 @@ app.layout = html.Div(children=[
                        ], 
                   style={'display': 'inline-block',
                          'marginRight': 20,
+                         'marginLeft': 200,
                          'vertical-align': 'bottom'}),
                                                                     
         html.Div([html.Label('Reference Sequence', style=TITLES),
@@ -229,4 +230,4 @@ def create_alignment(layout, reference_name,
 
 
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0', debug=True)
+    app.run_server(host='0.0.0.0', debug=False)
