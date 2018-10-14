@@ -12,7 +12,7 @@ import plotly.graph_objs as go
 from plotly import tools
 from util import (alignment_layout, get_msa_order, get_dimensions,
                   parse_seq_object, parse_sequences)
-from style import BASE_DIC, UPLOAD_BUTTON, COLOR_DIC
+from style import BASE_DIC, UPLOAD_BUTTON, COLOR_DIC, MENU_ELEMENTS, TITLES
 
 
 app = dash.Dash(__name__)
@@ -27,47 +27,51 @@ app.layout = html.Div(children=[
                                          n_clicks_timestamp='0',
                                          style=UPLOAD_BUTTON),
                              id='upload_data',
-                             style={'display': 'inline-block'}),
+                             style={'display': 'inline-block', 'marginBottom':
+                                 40}),
                  ]),
 
     html.Div([
-
-        dcc.Checklist(id='reference_layout',
+        html.Div([
+            html.Label('Theme', style=TITLES),
+            dcc.Checklist(id='reference_layout',
                       options=[{'label': 'Reference Layout',
                                 'value': True}],
-                      values=[True],
-                      style={'marginRight': 20,
-                             'display': 'inline-block'}),
+                      values=[True]),
 
 
-        dcc.RadioItems(id='layout-type',
+            dcc.RadioItems(id='layout-type',
                        options=[{'label': i, 'value': i} for i in ['Block',
                                                                    'Letter']],
-                       value='Block',
-                       style={'marginRight': 20,
-                              'display': 'inline-block'}),
+                       value='Block'),
+                       ], 
+                  style={'display': 'inline-block',
+                         'marginRight': 20,
+                         'vertical-align': 'bottom'}),
+                                                                    
+        html.Div([html.Label('Reference Sequence', style=TITLES),
+                  dcc.Dropdown(id='parent-seq')],
+                style=MENU_ELEMENTS),
+        
+        html.Div([html.Label('Color Scheme', style=TITLES),
+                  dcc.Dropdown(id='color-palette',
+                               options=[{'label': key, 'value': key} 
+                                        for key, value in COLOR_DIC.items()],
+                               value='DRuMS Nucleic Acid')],
+                 style=MENU_ELEMENTS),
 
-            dcc.Dropdown(id='parent-seq',
-                style={'width': '200px',
-                    'marginRight': 20,
-                       'display': 'inline-block'}),
-
-            dcc.Dropdown(id='color-palette',
-                options=[{'label': key, 'value': key} for key, value 
-                         in COLOR_DIC.items()],
-                value='Dark2',
-                style={'width': '200px', 'display': 'inline-block'}),
-          
-           html.Div([dcc.Dropdown(id='sample-data',
-                                  options=[{'label': 'Example 1', 
-                                            'value': os.path.join('data','example1.msa')},
+        html.Div([html.Label('Example Alignments', style=TITLES),
+                  html.Div([dcc.Dropdown(id='sample-data',
+                                         options=[{'label': 'Example 1', 
+                                            'value': os.path.join('data',
+                                                                  'example1.msa')},
                                            {'label': 'Example 2',
                                             'value': os.path.join('data',
-                                                'msa10.fna')}],
-                                  style={'width': '200px'})],
+                                                                  'msa10.fna')}],
+                            )])],
                 id='sample-data-div',
                 n_clicks_timestamp='0',
-                style={'display': 'inline-block'})
+                style=MENU_ELEMENTS)
         
         ]),
 
