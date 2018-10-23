@@ -9,11 +9,17 @@ import pandas as pd
 from io import StringIO
 
 
-def parse_sequences(seq_lines): 
+def parse_sequences(seq_lines, consensus_sequence): 
     msa = skbio.alignment.TabularMSA.read(seq_lines,
                                           constructor=skbio.sequence.DNA)
     seqs, names = zip(*[(str(seq), seq.metadata['id']) for seq in msa])
     conservation = msa.conservation()
+
+    names = list(names)
+    seqs = list(seqs)
+    if consensus_sequence:
+        names.insert(0, 'Consensus Sequence')
+        seqs.insert(0,str(msa.consensus()))
     return names, seqs, conservation
 
 
@@ -25,13 +31,13 @@ def alignment_layout(seqs, layout_type,
     block_values = [[0]*len(text_values)]
 
 
-    if layout_type == 'Letter':
+    if layout_type == 'Letters':
         text_colors = pd.Series(text_values).replace(letter_colors).tolist()
         block_colors = [[0.00, '#FFF'],
                         [1.00, '#FFF']]
         block_values *= len(seqs)
 
-    elif layout_type == 'Block':
+    elif layout_type == 'Blocks':
         text_colors = '#000'
         text_values = list(''.join(seqs))
         block_colors = [[0.00, '#F4F0E4'],
@@ -52,7 +58,7 @@ def alignment_layout(seqs, layout_type,
     for seq in seqs[1:]:
         seq_series = pd.Series(list(seq))
 
-        if layout_type == 'Letter':
+        if layout_type == 'Letters':
             text_colors.extend(seq_series.replace(letter_colors).tolist())
             if reference_layout:
                 seq_series.where(seq_series != pd.Series(list(seqs[0])), '.',
@@ -60,13 +66,13 @@ def alignment_layout(seqs, layout_type,
             
             text_values.extend(seq_series.tolist())
 
-        elif layout_type == 'Block':
+        elif layout_type == 'Blocks':
             if reference_layout:
                 seq_series.where(seq_series != pd.Series(list(seqs[0])), 0,
                                  inplace=True)
             seq_series.replace(base_dic, inplace=True)
             block_values.append(seq_series.tolist())
-        if not reference_layout and layout_type == 'Block':
+        if not reference_layout and layout_type == 'Blocks':
             block_values[0] = pd.Series(list(seqs[0])).replace(base_dic).tolist()
     return text_values, text_colors, block_values, block_colors
 

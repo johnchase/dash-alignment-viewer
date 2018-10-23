@@ -39,12 +39,10 @@ app.layout = html.Div(children=[
                                 'value': True}],
                       values=[True]),
 
-
-            dcc.RadioItems(id='layout-type',
-                       options=[{'label': i, 'value': i} for i in ['Block',
-                                                                   'Letter']],
-                       value='Block'),
-                       ], 
+            dcc.Checklist(id='consensus_sequence',
+                      options=[{'label': 'Calculate Consensus Sequence',
+                                'value': True}],
+                      values=[True])], 
                   style={'display': 'inline-block',
                          'marginRight': 20,
                          'marginLeft': 200,
@@ -53,6 +51,7 @@ app.layout = html.Div(children=[
         html.Div([html.Label('Reference Sequence', style=TITLES),
                   dcc.Dropdown(id='parent-seq')],
                 style=MENU_ELEMENTS),
+
         
         html.Div([html.Label('Color Scheme', style=TITLES),
                   dcc.Dropdown(id='color-palette',
@@ -60,7 +59,14 @@ app.layout = html.Div(children=[
                                         for key, value in COLOR_DIC.items()],
                                value='DRuMS Nucleic Acid')],
                  style=MENU_ELEMENTS),
-
+       
+        html.Div([html.Label('Layout Style', style=TITLES),
+                  dcc.Dropdown(id='layout-style',
+                               options=[{'label': 'Blocks', 'value': 'Blocks'},
+                                        {'label': 'Letters', 'value': 'Letters'}],
+                               value='Blocks')],
+                style=MENU_ELEMENTS),
+        
         html.Div([html.Label('Example Alignments', style=TITLES),
                   html.Div([dcc.Dropdown(id='sample-data',
                                          options=[{'label': 'Example 1', 
@@ -87,9 +93,11 @@ app.layout = html.Div(children=[
     [dash.dependencies.Input('upload_data', 'contents'),
      dash.dependencies.Input('upload-button', 'n_clicks_timestamp'),
      dash.dependencies.Input('sample-data', 'value'),
-     dash.dependencies.Input('sample-data-div', 'n_clicks_timestamp')])
+     dash.dependencies.Input('sample-data-div', 'n_clicks_timestamp'),
+     dash.dependencies.Input('consensus_sequence', 'values')])
 def get_sequence_names(upload_object, upload_timestamp,
-                       sample_object, sample_timestamp):
+                       sample_object, sample_timestamp,
+                       consensus_sequence):
     
     
     if int(upload_timestamp) > int(sample_timestamp):
@@ -101,24 +109,32 @@ def get_sequence_names(upload_object, upload_timestamp,
         if sample_object is None:
             return ''
         seq_lines = sample_object
-    names, _, _ = parse_sequences(seq_lines)
+        
+    if consensus_sequence: 
+        consensus_sequence = True
+    else: 
+        consensus_sequence = False
+
+    names, _, _ = parse_sequences(seq_lines, consensus_sequence)
     return [{'label': label, 'value': label} for label in names]
 
 
 @app.callback(
     dash.dependencies.Output('alignment', 'figure'),
-    [dash.dependencies.Input('layout-type', 'value'),
+    [dash.dependencies.Input('layout-style', 'value'),
      dash.dependencies.Input('parent-seq', 'value'),
      dash.dependencies.Input('upload_data', 'contents'),
      dash.dependencies.Input('upload-button', 'n_clicks_timestamp'),
      dash.dependencies.Input('sample-data', 'value'),
      dash.dependencies.Input('sample-data-div', 'n_clicks_timestamp'),
      dash.dependencies.Input('color-palette', 'value'),
-     dash.dependencies.Input('reference_layout', 'values')])
+     dash.dependencies.Input('reference_layout', 'values'),
+     dash.dependencies.Input('consensus_sequence', 'values')])
 def create_alignment(layout, reference_name,
                      upload_object, upload_timestamp,
                      sample_object, sample_timestamp,
-                     palette_name, reference_layout):
+                     palette_name, reference_layout,
+                     consensus_sequence):
     '''Create alignment'''
     if int(upload_timestamp) > int(sample_timestamp):
         seq_object = upload_object
@@ -130,7 +146,11 @@ def create_alignment(layout, reference_name,
             return ''
         seq_lines = sample_object
 
-    names, seqs, conservation  = parse_sequences(seq_lines)
+    if consensus_sequence: 
+        consensus_sequence = True
+    else: 
+        consensus_sequence = False 
+    names, seqs, conservation  = parse_sequences(seq_lines, consensus_sequence)
  
     x, y, n_seqs, sequence_length = get_dimensions(seqs)
 

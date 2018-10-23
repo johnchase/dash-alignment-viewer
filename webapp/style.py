@@ -23,7 +23,7 @@ for palette in cl_scales.keys():
 
 BASE_DIC = {'A': 1, 'C': .25, 'G': .5, 'T': .75, '-': 0}
 
-MENU_ELEMENTS = {'width': '200px', 
+MENU_ELEMENTS = {'width': '150px', 
                  'marginRight': '20px', 
                  'display': 'inline-block'}
 
