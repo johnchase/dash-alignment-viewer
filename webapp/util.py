@@ -9,7 +9,7 @@ import pandas as pd
 from io import StringIO
 
 
-def parse_sequences(seq_lines, consensus_sequence): 
+def parse_sequences(seq_lines, consensus_sequence):
     msa = skbio.alignment.TabularMSA.read(seq_lines,
                                           constructor=skbio.sequence.DNA)
     seqs, names = zip(*[(str(seq), seq.metadata['id']) for seq in msa])
@@ -19,17 +19,17 @@ def parse_sequences(seq_lines, consensus_sequence):
     seqs = list(seqs)
     if consensus_sequence:
         names.insert(0, 'Consensus Sequence')
-        seqs.insert(0,str(msa.consensus()))
+        seqs.insert(0, str(msa.consensus()))
     return names, seqs, conservation
 
 
 def alignment_layout(seqs, layout_type,
-                     letter_colors, reference_layout,base_dic):
+                     letter_colors, reference_layout,
+                     base_dic):
     '''Get layout for alignment'''
     letter_colors['-'] = '#444'
     text_values = list(seqs[0])
     block_values = [[0]*len(text_values)]
-
 
     if layout_type == 'Letters':
         text_colors = pd.Series(text_values).replace(letter_colors).tolist()
@@ -63,7 +63,7 @@ def alignment_layout(seqs, layout_type,
             if reference_layout:
                 seq_series.where(seq_series != pd.Series(list(seqs[0])), '.',
                                  inplace=True)
-            
+
             text_values.extend(seq_series.tolist())
 
         elif layout_type == 'Blocks':
@@ -73,7 +73,8 @@ def alignment_layout(seqs, layout_type,
             seq_series.replace(base_dic, inplace=True)
             block_values.append(seq_series.tolist())
         if not reference_layout and layout_type == 'Blocks':
-            block_values[0] = pd.Series(list(seqs[0])).replace(base_dic).tolist()
+            block_values[0] = \
+                    pd.Series(list(seqs[0])).replace(base_dic).tolist()
     return text_values, text_colors, block_values, block_colors
 
 
@@ -83,6 +84,7 @@ def get_msa_order(reference_name, names, seqs):
     seq_dic.move_to_end(reference_name)
     return zip(*list(seq_dic.items())[::-1])
 
+
 def get_dimensions(seqs):
     '''Function for getting figure get_dimensions'''
     n_seqs, sequence_length = len(seqs), len(seqs[0])
@@ -90,6 +92,7 @@ def get_dimensions(seqs):
     y = [item for sublist in y for item in sublist]
     x = list(range(sequence_length))*n_seqs
     return x, y, n_seqs, sequence_length
+
 
 def parse_seq_object(seq_object):
     '''Parse the object that is read in by Dash. This would ultimately use

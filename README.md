@@ -1,6 +1,5 @@
-In order to run this in Docker:
+## Dash App for viewing DNA sequence alignments
 
-```bash 
-docker build --rm -t chasejohnh/alignment-viewer .
-docker run -p 5000:5000 -e PORT=5000 chasejohnh/alignment-viewer:latest
-```
+The application can be found at:
+
+https://dash-alignment-viewer.herokuapp.com/
