@@ -2,7 +2,7 @@ gunicorn
 Flask
 Jinja2
 Werkzeug
-
+dash-dangerously-set-inner-html==0.0.1
 dash==0.26.5
 dash-core-components==0.28.3
 dash-html-components==0.12.0

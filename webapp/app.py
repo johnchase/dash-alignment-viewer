@@ -8,6 +8,7 @@ import numpy as np
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objs as go
+import dash_dangerously_set_inner_html
 
 from plotly import tools
 from util import (alignment_layout, get_msa_order, get_dimensions,
@@ -20,6 +21,9 @@ server = app.server
 
 app.layout = html.Div(children=[
     html.H1(children='Dash Alignment Viewer'),
+    html.Div([
+    dash_dangerously_set_inner_html.DangerouslySetInnerHTML('''
+        <a href="https://github.com/johnchase/dash-alignment-viewer"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png" alt="Fork me on GitHub"></a>''')]),
     html.Div([
 
         html.Div([dcc.Upload(html.Button('Upload File',
@@ -95,6 +99,7 @@ app.layout = html.Div(children=[
      dash.dependencies.Input('sample-data', 'value'),
      dash.dependencies.Input('sample-data-div', 'n_clicks_timestamp'),
      dash.dependencies.Input('consensus_sequence', 'values')])
+
 def get_sequence_names(upload_object, upload_timestamp,
                        sample_object, sample_timestamp,
                        consensus_sequence):
